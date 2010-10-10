@@ -21,14 +21,16 @@ def buildRForms(k):
     R1Ia = CatDiffForm([DiffForm([R1Q1,R1Q10,R1Q10], derham[1:]), DiffForm([R1Q20,R1Q2,R1Q20], derham[1:])])
     R1I = CatDiffForm([R1Ia, R0I.D()])
     R1 = MapDiffForm(R1I, psi, w[1:]) 
+    R1D = MapDiffForm(R0I.D(), psi, w[1:])
     
     R2Q = QSpace(k-1,k-1,k+2)
     R2Q0 = ZeroFns(R2Q.nfns)
     R2Ia = DiffForm([R2Q0, R2Q0, R2Q], derham[2:])
     R2I = CatDiffForm([R2Ia, R1Ia.D()])
     R2 = MapDiffForm(R2I, psi, w[2:])
+    R2D = MapDiffForm(R1Ia.D(), psi, w[1:])
     
     R3 = MapDiffForm(DiffForm([QSpace(k-1,k-1,k+3)], []), psi, w[3:])
-    return [R0,R1,R2,R3]
+    return [R0,R1,R2,R3, R1D, R2D]
 
                                     

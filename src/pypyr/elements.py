@@ -94,6 +94,7 @@ class DegreeSet(object):
         self.ids = numpy.cumsum([0]+[len(d.dofs) for d in degrees if d is not None])
         self.dofs = [d.dofs for d in degrees if d is not None]
         self.indices = numpy.concatenate([d.indices for d in degrees if d is not None])
+        print [d.pullback.weights[0](d.points).shape for d in degrees if d is not None]
         self.weights = numpy.concatenate([d.pullback.weights[0](d.points) for d in degrees if d is not None], axis=0)
         
     
@@ -153,10 +154,11 @@ class ElementFactory(object):
 def edgepoints(k):
     return numpy.linspace(0,1,k+1,False)[1:].reshape(-1,1)
 
-def squarepoints(k, extra=0):
-    g = numpy.mgrid[0:k,0:k].reshape(2,-1)
-    ep = edgepoints(k)
-    return numpy.hstack((ep[g[0]], ep[g[1]])+(numpy.zeros((g.shape[1],1)),)*extra)
+def squarepoints(k1, k2, extra=0):
+    g = numpy.mgrid[0:k1,0:k2].reshape(2,-1)
+    ep1 = edgepoints(k1)
+    ep2 = edgepoints(k2)
+    return numpy.hstack((ep1[g[0]], ep2[g[1]])+(numpy.zeros((g.shape[1],1)),)*extra)
 
 def trianglepoints(k,extra=0):
     g = numpy.mgrid[0:k+1,0:k+1].reshape(2,-1)
@@ -172,19 +174,42 @@ class H1Elements(ElementFactory):
 
         if k >=2:
             self.edge = self.createDegreeMethod(refpoints1d, edgepoints(k-1), numpy.eye(k-1))
-            self.quad = self.createDegreeMethod(refpoints2d, squarepoints(k-1), numpy.eye((k-1)*(k-1)))
+            self.quad = self.createDegreeMethod(refpoints2d, squarepoints(k-1,k-1), numpy.eye((k-1)*(k-1)))
         if k >=3:
             self.triangle = self.createDegreeMethod(refpoints2d, trianglepoints(k-2), numpy.eye((k-1)*(k-2)/2))
 
+class HcurlElements(ElementFactory):
+    def __init__(self, k, curlfree = False):
+        from numpy import eye, concatenate, zeros, array
+
+        self.createpullback = lambda map: mapbasedpullback(map, 1)
+        self.pyramidform = buildRForms(k)[4 if curlfree else 1]
+        self.edge = self.createDegreeMethod(refpyramid[[0,3]], edgepoints(k), concatenate((numpy.eye(k,k)[...,newaxis], zeros((k,k,2))), axis=2))
+        
+        if k >=2:
+            ns = k*(k-1)
+            sp = concatenate((squarepoints(k-1,k,1), squarepoints(k,k-1,1)), axis=1).reshape(-1,2)
+            se = eye(ns,ns)
+            sz = zeros(ns,ns)
+            sdofs = array([[[se,sz,sz],[sz,sz,sz]],[[sz,sz,sz],[sz,se,sz]]]).reshape(ns*2,ns*2,3) 
+            self.quad = self.createDegreeMethod(refpyramid[[0,3,1]], sp, sdofs)
+            nt = (k-1) * k / 2        
+            tp = trianglepoints(k-1,1).repeat(2,axis=0) 
+            te = eye(nt,nt)
+            tz = zeros(nt,nt)
+            tdofs = array([[[te,tz,tz],[tz,tz,tz]],[[tz,tz,tz],[tz,te,tz]]]).reshape(nt*2,nt*2,3) 
+            self.triangle = self.createDegreeMethod(refpyramid[[0,3,1]], tp, tdofs)
+        
+
 class HdivElements(ElementFactory):
-    def __init__(self, k):
+    def __init__(self, k, divfree = False):
         from numpy import eye, concatenate, zeros
         self.createpullback = lambda map: mapbasedpullback(map, 2)
-        self.pyramidform = buildRForms(k)[2]
+        self.pyramidform = buildRForms(k)[5 if divfree else 2]
         ntri = k * (k+1) / 2
         nquad = k*k
         self.triangle = self.createDegreeMethod(refpyramid[[0,3,1]], trianglepoints(k,1), concatenate((zeros((ntri, ntri, 2)), -eye(ntri)[...,newaxis]), axis=2))
-        self.quad = self.createDegreeMethod(refpyramid[[0,3,1]], squarepoints(k,1), concatenate((zeros((nquad, nquad, 2)), -eye(nquad)[...,newaxis]), axis=2))
+        self.quad = self.createDegreeMethod(refpyramid[[0,3,1]], squarepoints(k,k,1), concatenate((zeros((nquad, nquad, 2)), -eye(nquad)[...,newaxis]), axis=2))
         
 class L2Elements(ElementFactory):
     def __init__(self, k):

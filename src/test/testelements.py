@@ -19,7 +19,7 @@ class TestDegrees(unittest.TestCase):
         for k in range(2, 10):
             self.assertEqual(len(edgepoints(k)), k)
             self.assertEqual(len(trianglepoints(k)), k*(k+1)/2)
-            self.assertEqual(len(squarepoints(k)), k*k)
+            self.assertEqual(len(squarepoints(k,k)), k*k)
             
     def testh1pyramid(self):
         """ Initialise an h1 pyramid and test that its shape functions are dual to the external degrees """
@@ -67,4 +67,16 @@ class TestDegrees(unittest.TestCase):
             ndof, nfn = dofvals.shape
             numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
             
-            
+    def testhcurlpyramid(self):
+        for k in range(1,6):
+            degrees = HcurlElements(k)
+            points = numpy.array([[0,0,0],[0,1,0],[1,1,0],[1,0,0],[1,1,1]])
+            cs = []
+            for e in [[0,1],[1,2],[2,3],[3,0],[0,4],[1,4],[2,4],[3,4]]: cs.append(degrees.edge(points[e]))            
+            for t in [[0,1,4],[1,2,4],[2,3,4],[3,0,4]]: cs.append(degrees.triangle(points[t]))
+            cs.append(degrees.quad(points[[0,3,1]]))
+            elt = degrees.pyramid(points, cs)
+            dofvals = numpy.concatenate([c.evaluatedofs(elt.values) for c in cs if c is not None], axis=0)
+            ndof, nfn = dofvals.shape
+            numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
+                
