@@ -188,10 +188,11 @@ class HcurlElements(ElementFactory):
         
         if k >=2:
             ns = k*(k-1)
-            sp = concatenate((squarepoints(k-1,k,1), squarepoints(k,k-1,1)), axis=1)
+            sp = concatenate((squarepoints(k-1,k,1), squarepoints(k,k-1,1)), axis=0)
             se = eye(ns,ns)
-            sz = zeros((ns,ns))
-            sdofs = array([[[se,sz,sz],[sz,sz,sz]],[[sz,sz,sz],[sz,se,sz]]]).reshape(ns*2,ns*2,3) 
+            sdofs = zeros((ns*2,ns*2,3))
+            sdofs[:ns, :ns, 0] = se
+            sdofs[ns:, ns:, 1] = se 
             self.quad = self.createDegreeMethod(refpyramid[[0,3,1]], sp, sdofs)
             nt = (k-1) * k / 2        
             tp = trianglepoints(k-1,1).repeat(2,axis=0) 
