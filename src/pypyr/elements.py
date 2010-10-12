@@ -151,14 +151,14 @@ class ElementFactory(object):
     def triangle(self,points): return None
     def quad(self,points): return None
         
-def edgepoints(k):
-    return numpy.linspace(0,1,k+1,False)[1:].reshape(-1,1)
+def edgepoints(k, extra=0):
+    return numpy.hstack((numpy.linspace(0,1,k+1,False)[1:].reshape(-1,1), numpy.zeros((k,extra))))
 
 def squarepoints(k1, k2, extra=0):
     g = numpy.mgrid[0:k1,0:k2].reshape(2,-1)
     ep1 = edgepoints(k1)
     ep2 = edgepoints(k2)
-    return numpy.hstack((ep1[g[0]], ep2[g[1]])+(numpy.zeros((g.shape[1],1)),)*extra)
+    return numpy.hstack((ep1[g[0]], ep2[g[1]], numpy.zeros((g.shape[1],extra))))
 
 def trianglepoints(k,extra=0):
     g = numpy.mgrid[0:k+1,0:k+1].reshape(2,-1)
@@ -179,26 +179,30 @@ class H1Elements(ElementFactory):
             self.triangle = self.createDegreeMethod(refpoints2d, trianglepoints(k-2), numpy.eye((k-1)*(k-2)/2))
 
 class HcurlElements(ElementFactory):
-    def __init__(self, k, curlfree = False):
+    def __init__(self, k):
         from numpy import eye, concatenate, zeros, array
 
         self.createpullback = lambda map: mapbasedpullback(map, 1)
-        self.pyramidform = buildRForms(k)[4 if curlfree else 1]
-        self.edge = self.createDegreeMethod(refpyramid[[0,3]], edgepoints(k), concatenate((numpy.eye(k,k)[...,newaxis], zeros((k,k,2))), axis=2))
+        self.pyramidform = buildRForms(k)[1]
+        self.edge = self.createDegreeMethod(refpyramid[[0,3]], edgepoints(k,2), concatenate((numpy.eye(k,k)[...,newaxis], zeros((k,k,2))), axis=2))
         
         if k >=2:
             ns = k*(k-1)
-            sp = concatenate((squarepoints(k-1,k,1), squarepoints(k,k-1,1)), axis=1).reshape(-1,2)
+            sp = concatenate((squarepoints(k-1,k,1), squarepoints(k,k-1,1)), axis=1)
             se = eye(ns,ns)
-            sz = zeros(ns,ns)
+            sz = zeros((ns,ns))
             sdofs = array([[[se,sz,sz],[sz,sz,sz]],[[sz,sz,sz],[sz,se,sz]]]).reshape(ns*2,ns*2,3) 
             self.quad = self.createDegreeMethod(refpyramid[[0,3,1]], sp, sdofs)
             nt = (k-1) * k / 2        
             tp = trianglepoints(k-1,1).repeat(2,axis=0) 
             te = eye(nt,nt)
-            tz = zeros(nt,nt)
+            tz = zeros((nt,nt))
             tdofs = array([[[te,tz,tz],[tz,tz,tz]],[[tz,tz,tz],[tz,te,tz]]]).reshape(nt*2,nt*2,3) 
             self.triangle = self.createDegreeMethod(refpyramid[[0,3,1]], tp, tdofs)
+            print sp
+            print sdofs
+            print tp
+            print tdofs
         
 
 class HdivElements(ElementFactory):

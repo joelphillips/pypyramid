@@ -95,7 +95,7 @@ class Affine(object):
         self.linear = linear      
     
     def apply(self, p):
-#        print "Affine apply", p.shape, self.linear.shape, self.offset.shape
+#        print "Affine apply", p.shape, self.linear.transpose().shape, self.offset.shape
         return (numpy.dot(p, self.linear.transpose()) + self.offset).reshape(-1,len(self.offset))
     
     def applyinv(self, q):        
