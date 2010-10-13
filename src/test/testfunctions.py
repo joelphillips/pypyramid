@@ -8,15 +8,15 @@ import numpy
 from pypyr.functions import *
 
 class TestJacobi(unittest.TestCase):
-    def testJacobi2(self):
-        for a in range(3):
-            for b in range(3):
-                for d in range(4):
-                    N = 10
-                    x = numpy.linspace(0,1,10)
-                    j1 = numpy.vstack([jacobid(n,a,b,d)(x) for n in range(N+1)])
-                    j2 = jacobi2d(N,a,b,d,x)
-                    numpy.testing.assert_array_almost_equal(j1,j2)
+#    def testJacobi2(self):
+#        for a in range(3):
+#            for b in range(3):
+#                for d in range(4):
+#                    N = 10
+#                    x = numpy.linspace(0,1,10)
+#                    j1 = numpy.vstack([jacobid(n,a,b,d)(x) for n in range(N+1)])
+#                    j2 = jacobi2d(N,a,b,d,x)
+#                    numpy.testing.assert_array_almost_equal(j1,j2)
     
     def testJacobi2and3(self):
         from scipy.special.orthogonal import jacobi
@@ -24,10 +24,10 @@ class TestJacobi(unittest.TestCase):
         x = numpy.linspace(0,1,6)
         for a in range(4):
             for b in range(4):
-                j1 = numpy.vstack([jacobi(n,a,b)(2*x-1) for n in range(N+1)])
+#                j1 = numpy.vstack([jacobi(n,a,b)(2*x-1) for n in range(N+1)])
                 j2 = jacobi2(N,a,b,x)
                 j3 = Jacobi(a,b)(N,x)
-                numpy.testing.assert_array_almost_equal(j1,j3)
+#                numpy.testing.assert_array_almost_equal(j1,j3)
                 numpy.testing.assert_array_almost_equal(j2,j3)
         
 

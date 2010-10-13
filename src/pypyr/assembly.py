@@ -51,6 +51,7 @@ def blockInnerProducts(quadweights, leftvalsiter, rightvalsiter, leftI, rightI):
             leftvals = leftvals.reshape(leftvals.shape + (1,)*(vs - lvs))
             rightvals = rightvals.reshape(rightvals.shape + (1,)*(vs - rvs))  
             lvw = leftvals * weights.reshape((-1,) + (1,)*(vs-1))
+            print lvw.shape, rightvals.shape
             data.append(numpy.tensordot(lvw, rightvals,  ([0]+range(2,vs), [0]+range(2,vs))))
             idx.append(e)
         ip.append(len(idx))
@@ -133,9 +134,10 @@ class System(object):
         for tag, G in tagtoG.iteritems():
             UG[self.rightbdys[tag].indices] = G
         etop = self.elementfinder.elementPointMap(points)
-        UGvals = numpy.zeros((len(points)))
+        UGvals = numpy.zeros((len(points), self.rightbasis.elements[0].ncpts))
         for e, pids in zip(self.rightbasis.elements, etop):
-            if len(pids): UGvals[pids] += numpy.dot(e.values(points[pids]).reshape((len(pids), len(e.indices))), UG[e.indices])
+            evals = e.derivs(points[pids]) if deriv else e.values(points[pids])
+            if len(pids): UGvals[pids] += numpy.tensordot(evals, UG[e.indices], ([1],[0]))
         return UGvals    
          
 class SymmetricSystem(System):

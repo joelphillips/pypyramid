@@ -12,6 +12,7 @@ from scipy.sparse.linalg.dsolve.linsolve import spsolve
 from pypyr.timing import *
 from pypyr.assembly import SymmetricSystem, AsymmetricSystem
 import scipy.sparse.linalg as ssl 
+import pypyr.solvers as ps
 
 def laplaceeigs(k,N,n):
     import scipy.linalg as sl
@@ -85,7 +86,6 @@ def poissonneumann(k,N,g,f, points):
     return system.evaluate(points, U, {}, False)    
 
 def mixedpoissondual(k,N, g, f, points):
-    import scipy.sparse as ss
     tag = "B1"
     hdiveltsA = HdivElements(k)
     hdiveltsB = HdivElements(k)
@@ -100,17 +100,20 @@ def mixedpoissondual(k,N, g, f, points):
     Btsystem = AsymmetricSystem(hdiveltsBt, l2eltsBt, quadrule, meshevents, [])
     
     A = Asystem.systemMatrix(False)
-    Bt = Btsystem.systemMatrix(True, False)
+#    Bt = Btsystem.systemMatrix(True, False)
     B = Bsystem.systemMatrix(False, True)
     print A.shape, B.shape
     
     F = Bsystem.loadVector(f, False)
     gn = lambda x,n: g(x).reshape(-1,1,1) * n.reshape(-1,1,3)
     G = Btsystem.boundaryLoad({tag:gn}, squarequadrature(k+1), trianglequadrature(k+1), False)
-    S = ss.bmat([[A, Bt],[B, None]])
-    M = numpy.concatenate((G[tag], F))
-    U = spsolve(S, M)[:,numpy.newaxis]
-    return Btsystem.evaluate(points, U[len(G[tag]):], {}, False)    
+    u,p = ps.directsolve(A, B, G[tag], F)    
+    um,pm = ps.mixedcg(A, B, G[tag], F)
+#    print numpy.hstack((UU[:len(u)], u))
+    print math.sqrt(numpy.sum((u - um)**2)/len(u))
+    print math.sqrt(numpy.sum((p - pm)**2)/len(p))
+    
+    return Btsystem.evaluate(points, p, {}, False)    
     
     
 
@@ -156,8 +159,8 @@ def dopoissonneumann():
 
 @print_timing
 def dopoissonmixed():
-    k = 3
-    N = 3
+    k = 4
+    N = 4
     d = numpy.array([1,2,3])
     u = lambda p: numpy.sin(numpy.dot(p, d))[:,numpy.newaxis]
     f = lambda p: -sum(d**2) * u(p)

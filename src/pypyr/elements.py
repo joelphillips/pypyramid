@@ -25,6 +25,7 @@ class Element(object):
         self.pullback = pullback
         self.invmap = invmap
         self.uvalues = pullback(diffform.values)
+        self.ncpts = diffform.ncpts
         if pullback.next() is not None: self.uderivs = pullback.next()(diffform.D().values)
         t.split("Initialised stuff")
         

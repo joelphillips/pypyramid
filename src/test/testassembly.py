@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 from pypyr.mesh import buildcubemesh
 from pypyr.utils import pyramidquadrature, squarequadrature, trianglequadrature, uniformcubepoints
-from pypyr.elements import H1Elements, HdivElements, L2Elements  
+from pypyr.elements import H1Elements, HcurlElements, HdivElements, L2Elements  
 from pypyr.assembly import SymmetricSystem, AsymmetricSystem
 
 class TestSymmetric(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestSymmetric(unittest.TestCase):
         for k in range(1,3):
             quadrule = pyramidquadrature(k+1)
             for N in range(1,3):
-                for elements in [H1Elements(k), HdivElements(k)]:
+                for elements in [H1Elements(k), HcurlElements(k), HdivElements(k)]:
                     system = SymmetricSystem(elements, quadrule, lambda m: buildcubemesh(N, m, tag), [tag])
                     for deriv in [False, True]:
                         SM = system.systemMatrix(deriv)

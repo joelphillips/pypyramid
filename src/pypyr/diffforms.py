@@ -9,6 +9,7 @@ from pypyr.mappings import Pullback
 class DiffForm(object):
     def __init__(self, cpts, derivs, d2 = False):
         self.cpts = cpts
+        self.ncpts = len(cpts)
         self.nfns = cpts[0].nfns
         self.derivs = derivs
         self.d2 = d2
@@ -24,6 +25,7 @@ class DiffForm(object):
 class CatDiffForm(object):
     def __init__(self, dfs):
         self.dfs = dfs
+        self.ncpts = dfs[0].ncpts
         self.nfns = sum([df.nfns for df in dfs])
     
     def values(self, p):
@@ -39,6 +41,7 @@ class MapDiffForm():
         self.f = f
         self.weights = weights
         self.values = Pullback(f, weights)(underlying.values) # sexy python construct
+        self.ncpts = underlying.ncpts
         self.nfns = underlying.nfns
     
     def D(self):
