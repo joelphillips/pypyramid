@@ -40,6 +40,7 @@ class TestDegrees(unittest.TestCase):
             np.set_printoptions(precision = 4, suppress=True, linewidth=200)
             dofvals = numpy.concatenate([c.evaluatedofs(elt.values) for c in cs if c is not None], axis=0)
             ndof, nfn = dofvals.shape
+            print k,ndof,nfn
             numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
     
     def testDegreeSet(self):
@@ -65,21 +66,23 @@ class TestDegrees(unittest.TestCase):
             elt = degrees.pyramid(points, cs)
             dofvals = numpy.concatenate([c.evaluatedofs(elt.values) for c in cs if c is not None], axis=0)
             ndof, nfn = dofvals.shape
+            print "hdiv ",k,ndof,nfn
             numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
             
-#    def testhcurlpyramid(self):
-#        for k in range(1,6):
-#            print "H(curl) ", k
-#            degrees = HcurlElements(k)
-#            points = numpy.array([[0,0,0],[0,1,0],[1,1,0],[1,0,0],[1,1,1]])
-#            cs = []
-#            for e in [[0,1],[1,2],[2,3],[3,0],[0,4],[1,4],[2,4],[3,4]]: cs.append(degrees.edge(points[e]))            
-#            for t in [[0,1,4],[1,2,4],[2,3,4],[3,0,4]]: cs.append(degrees.triangle(points[t]))
-#            cs.append(degrees.quad(points[[0,3,1]]))
-##            for c in cs:
-##                print c.points.shape, c.pullback.map.linear.transpose().shape
-#            elt = degrees.pyramid(points, cs)
-#            dofvals = numpy.concatenate([c.evaluatedofs(elt.values) for c in cs if c is not None], axis=0)
-#            ndof, nfn = dofvals.shape
-#            numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
+    def testhcurlpyramid(self):
+        for k in range(1,6):
+            print "H(curl) ", k
+            degrees = HcurlElements(k)
+            points = numpy.array([[0,0,0],[0,1,0],[1,1,0],[1,0,0],[1,1,1]])
+            cs = []
+            for e in [[0,1],[1,2],[2,3],[3,0],[0,4],[1,4],[2,4],[3,4]]: cs.append(degrees.edge(points[e]))            
+            for t in [[0,1,4],[1,2,4],[2,3,4],[3,0,4]]: cs.append(degrees.triangle(points[t]))
+            cs.append(degrees.quad(points[[0,3,1]]))
+#            for c in cs:
+#                print c.points.shape, c.pullback.map.linear.transpose().shape
+            elt = degrees.pyramid(points, cs)
+            dofvals = numpy.concatenate([c.evaluatedofs(elt.values) for c in cs if c is not None], axis=0)
+            ndof, nfn = dofvals.shape
+            print ndof,nfn
+            numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
                 

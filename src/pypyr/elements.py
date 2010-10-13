@@ -6,7 +6,7 @@ Created on Aug 20, 2010
 import numpy
 from numpy import newaxis
 
-from pypyr.shapefunctions import buildRForms
+from pypyr.shapefunctions import *
 from pypyr.mappings import buildaffine, mapbasedpullback, Pullback
 from pypyr.timing import print_timing, Timer
    
@@ -55,6 +55,7 @@ class Element(object):
             Mt = solve(RR, QQt)
             t.split("Matrix solve")
             self.M = numpy.hstack((Mt.transpose(), N))
+            
         else: self.M = numpy.eye(diffform.nfns)
 #        t.show()
         
@@ -94,7 +95,7 @@ class DegreeSet(object):
         self.ids = numpy.cumsum([0]+[len(d.dofs) for d in degrees if d is not None])
         self.dofs = [d.dofs for d in degrees if d is not None]
         self.indices = numpy.concatenate([d.indices for d in degrees if d is not None])
-        print [d.pullback.weights[0](d.points).shape for d in degrees if d is not None]
+#        print [d.pullback.weights[0](d.points).shape for d in degrees if d is not None]
         self.weights = numpy.concatenate([d.pullback.weights[0](d.points) for d in degrees if d is not None], axis=0)
         
     
@@ -168,7 +169,7 @@ def trianglepoints(k,extra=0):
 
 class H1Elements(ElementFactory):
     def __init__(self, k):
-        self.pyramidform = buildRForms(k)[0]
+        self.pyramidform = R0Forms(k)
         self.createpullback = lambda map : mapbasedpullback(map, 0) 
         self.vertex = self.createDegreeMethod([], numpy.zeros((1,0)), numpy.eye(1))
 
@@ -180,10 +181,10 @@ class H1Elements(ElementFactory):
 
 class HcurlElements(ElementFactory):
     def __init__(self, k):
-        from numpy import eye, concatenate, zeros, array
+        from numpy import eye, concatenate, zeros, tile
 
         self.createpullback = lambda map: mapbasedpullback(map, 1)
-        self.pyramidform = buildRForms(k)[1]
+        self.pyramidform = R1Forms(k)
         self.edge = self.createDegreeMethod(refpyramid[[0,3]], edgepoints(k,2), concatenate((numpy.eye(k,k)[...,newaxis], zeros((k,k,2))), axis=2))
         
         if k >=2:
@@ -191,26 +192,23 @@ class HcurlElements(ElementFactory):
             sp = concatenate((squarepoints(k-1,k,1), squarepoints(k,k-1,1)), axis=0)
             se = eye(ns,ns)
             sdofs = zeros((ns*2,ns*2,3))
-            sdofs[:ns, :ns, 0] = se
-            sdofs[ns:, ns:, 1] = se 
+            sdofs[:ns, :ns, 1] = se
+            sdofs[ns:, ns:, 0] = se 
             self.quad = self.createDegreeMethod(refpyramid[[0,3,1]], sp, sdofs)
             nt = (k-1) * k / 2        
-            tp = trianglepoints(k-1,1).repeat(2,axis=0) 
+            tp = tile(trianglepoints(k-1,1),(2,1)) 
             te = eye(nt,nt)
-            tz = zeros((nt,nt))
-            tdofs = array([[[te,tz,tz],[tz,tz,tz]],[[tz,tz,tz],[tz,te,tz]]]).reshape(nt*2,nt*2,3) 
+            tdofs = zeros((nt*2,nt*2,3))
+            tdofs[:nt,:nt,1] = te
+            tdofs[nt:,nt:,0] = te
             self.triangle = self.createDegreeMethod(refpyramid[[0,3,1]], tp, tdofs)
-            print sp
-            print sdofs
-            print tp
-            print tdofs
         
 
 class HdivElements(ElementFactory):
     def __init__(self, k, divfree = False):
         from numpy import eye, concatenate, zeros
         self.createpullback = lambda map: mapbasedpullback(map, 2)
-        self.pyramidform = buildRForms(k)[5 if divfree else 2]
+        self.pyramidform = R2FormsDivFree(k) if divfree else R2Forms(k)
         ntri = k * (k+1) / 2
         nquad = k*k
         self.triangle = self.createDegreeMethod(refpyramid[[0,3,1]], trianglepoints(k,1), concatenate((zeros((ntri, ntri, 2)), -eye(ntri)[...,newaxis]), axis=2))
@@ -219,5 +217,5 @@ class HdivElements(ElementFactory):
 class L2Elements(ElementFactory):
     def __init__(self, k):
         self.createpullback = lambda map: mapbasedpullback(map, 3)
-        self.pyramidform = buildRForms(k)[3]
+        self.pyramidform = R3Forms(k)
                                                          

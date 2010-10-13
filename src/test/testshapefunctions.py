@@ -15,8 +15,7 @@ class TestRForms(unittest.TestCase):
         from numpy.linalg import solve, det
         maxk = 7
         for k in range(1,maxk):
-            rforms = buildRForms(k)
-            R0 = rforms[0]
+            R0 = R0Forms(k)
             p = pyrpoints(k)
             p95 = pyrpoints(k)*0.95
             p2 = pyrpoints(k*2)
@@ -46,8 +45,7 @@ class TestRForms(unittest.TestCase):
         from numpy.linalg import lstsq
         maxk = 5
         for k in range(1,maxk):
-            rforms = buildRForms(k)
-            for R in rforms[1:3]:
+            for R in [R1Forms(k), R2Forms(k)]:
                 p = pyrpoints(k)*0.95
                 p2 = pyrpoints(k*2)*0.95
                 V1p = R.values(p)

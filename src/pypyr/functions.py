@@ -17,7 +17,6 @@ def jacobid(n, a, b, d):
 
 #@print_timing
 def jacobi2d(N,a,b,d,x):
-    from math import factorial
     from scipy.special.orthogonal import poch
 #    v = jacobi2(N-d, a+d, b+d,x)
     v = getJacobi(a+d,b+d)(N-d, x)   
@@ -95,14 +94,15 @@ class Jacobi(object):
         
     
 class QSpace(object):
-    def __init__(self, l,m,k, d = numpy.array([0,0,0])):
+    def __init__(self, l,m,k, rmin=0, d = numpy.array([0,0,0])):
         if d[2] > 1: raise ValueError("Can only differentiate z once. d=%s"%d)
         self.l = l
         self.m = m
         self.k = k
         self.d = d
+        self.rmin = rmin
         lm = min(l,m)
-        self.nfns = (2*lm+3)*(lm+2) * (lm+1) / 6 + (lm+2)*(lm+1)*abs(l-m)/2
+        self.nfns = (2*lm+3)*(lm+2) * (lm+1) / 6 + (lm+2)*(lm+1)*abs(l-m)/2 - self.rmin
         
 #    @print_timing    
     def values(self,p):
@@ -120,7 +120,7 @@ class QSpace(object):
         
         pxk = jacobi2d(self.k,0,0,xd,x)
         pyk = jacobi2d(self.k,0,0,yd,y)
-        for r in range(self.k+1):
+        for r in range(self.rmin, self.k+1):
 #            pz = jacobid(r,0,2,0)(1-zeta) if zd == 0 else zeta**2 * jacobid(r,0,2,1)(1-zeta)
             dfac = (-1)**zd * factorial(r+zd-1)/factorial(r-1) if r > 0 else 1 if zd == 0 else 0
             pz = dfac * zeta**(r+zd)
@@ -148,7 +148,7 @@ class QSpace(object):
     def deriv(self, i):
         newd = self.d.copy()
         newd[i]+=1
-        return QSpace(self.l, self.m, self.k, newd)    
+        return QSpace(self.l, self.m, self.k, self.rmin, newd)    
 
 class ZeroFns(object):
     def __init__(self, nfns):
