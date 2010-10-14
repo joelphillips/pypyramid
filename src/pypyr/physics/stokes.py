@@ -11,6 +11,7 @@ import pypyr.mesh as pm
 import numpy as np
 import scipy.sparse as ss
 import scipy.sparse.linalg as ssl
+import enthought.mayavi.mlab as emm
 
 openbdytag = 'OPEN'
 closedbdytag = 'CLOSED'
@@ -41,16 +42,18 @@ def stokes(k, meshevents, v, points):
     gg = G[bdytag]
     bb = b[bdytag]
     
-    print A.shape, B.shape, C.shape, gg.shape, bb.shape
-    n = len(gg)
+    ng = len(gg)
+    nb = len(bb)
+    print A.shape, B.shape, C.shape, gg.shape, bb.shape, ng, nb
     
-    S = ss.bmat([[A, B, None],[B, None, C.transpose()],[None, C, None]])
-    L = np.vstack((gg,np.zeros_like(gg), bb))
+    S = ss.bmat([[A, B, None, None],[B, None, C.transpose(), None],[None, C, None, np.ones((nb,1))],[None,None,np.ones((1,nb)), None]])
+    L = np.vstack((gg,np.zeros_like(gg), bb, np.zeros((1,1))))
     X = ssl.spsolve(S, L)
     print X
     
-    u = Bsys.evaluate(points, X[n:2*n], {}, True)
+    u = Bsys.evaluate(points, X[ng:2*ng], {}, True)
     print u
+    return u
     
             
 def stokescubemesh(n, mesh):
@@ -80,4 +83,12 @@ def stokescubemesh(n, mesh):
 
         
 if __name__ == "__main__":
-    stokes(1,lambda m: pm.buildcubemesh(1, m, bdytag),np.array([1,0,0]), pu.uniformcubepoints(4))
+    k = 3
+    N = 1
+    points = pu.uniformcubepoints(8)
+    u = stokes(k,lambda m: pm.buildcubemesh(N, m, bdytag),np.array([1,0,0]), points)
+    pt = points.transpose()
+    ut = u.transpose()
+    emm.quiver3d(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2])
+    emm.show()
+    

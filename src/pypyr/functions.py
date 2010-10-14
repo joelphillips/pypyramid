@@ -132,7 +132,7 @@ class QSpace(object):
 #            py = jacobi2d(r+self.m-self.k,0,0,yd,y)
 
 #            print px.shape, pxk[:max(0,r+self.l+1-self.k, :].shape, r, self.l, self.k
-
+#            print r, self.l, self.m, self.k, self.d, (pxk[:max(0,r+self.l+1-self.k),newaxis, :] * pyk[newaxis,:max(0,r+1+self.m-self.k),:] * pz).shape, pz.shape
             vals.append((pxk[:max(0,r+self.l+1-self.k),newaxis, :] * pyk[newaxis,:max(0,r+1+self.m-self.k),:] * pz).reshape(-1, len(p)).transpose())
             
         V = numpy.hstack(vals)
