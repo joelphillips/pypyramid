@@ -67,6 +67,8 @@ def poissondirichlet(k,N,g,f, points):
         F = system.loadVector(f)
     else: F = 0
     
+    print SM.shape, S.shape, SIBs[tag].shape, Gs[tag].shape, F.shape, SG.shape
+    
     t = Timer().start()
     U = spsolve(S, -F-SG)[:,numpy.newaxis]
     t.split("spsolve").show()
@@ -96,8 +98,8 @@ def mixedpoissondual(k,N, g, f, points):
     meshevents = lambda m: buildcubemesh(N,m,tag)
     
     Asystem = SymmetricSystem(hdiveltsA, quadrule, meshevents, [])
-    Bsystem = AsymmetricSystem(l2eltsB, hdiveltsB, quadrule, meshevents, [])
-    Btsystem = AsymmetricSystem(hdiveltsBt, l2eltsBt, quadrule, meshevents, [])
+    Bsystem = AsymmetricSystem(l2eltsB, hdiveltsB, quadrule, meshevents, [],[])
+    Btsystem = AsymmetricSystem(hdiveltsBt, l2eltsBt, quadrule, meshevents, [],[])
     
     A = Asystem.systemMatrix(False)
 #    Bt = Btsystem.systemMatrix(True, False)
@@ -118,7 +120,7 @@ def mixedpoissondual(k,N, g, f, points):
     
 
 def logxminus111(p):
-    return (numpy.sum((p+numpy.array([1,1,1]))**2, axis=1)**(-1.0/2))[:,numpy.newaxis]
+    return (numpy.sum((p+numpy.array([1,1,1]))**2, axis=1)**(-1.0/2))[:,numpy.newaxis, numpy.newaxis]
     
 def tabulate():    
     kmax = 5
@@ -128,16 +130,17 @@ def tabulate():
     l2s = numpy.zeros((nmax,kmax))
     for k in range(1,kmax+1):
         for N in range(1,nmax+1):
+            if k==1 and N==1: break
             print k,N
             Up = laplacedirichlet(k,N, logxminus111, points)[:,numpy.newaxis]
             l2s[k-1,N-1] = math.sqrt(numpy.sum((Up - up)**2)/(len(points)))
         print l2s
  
 def dopoisson():
-    k = 5
-    N = 3
+    k = 1
+    N = 2
     d = numpy.array([1,2,3])
-    g = lambda p: numpy.sin(numpy.dot(p, d))[:,numpy.newaxis]
+    g = lambda p: numpy.sin(numpy.dot(p, d))[:,numpy.newaxis, numpy.newaxis]
     f = lambda p: -sum(d**2) * g(p)
     points = uniformcubepoints(8)
     Up = poissondirichlet(k,N,g,f, points)[:,numpy.newaxis]
@@ -159,22 +162,23 @@ def dopoissonneumann():
 
 @print_timing
 def dopoissonmixed():
-    k = 4
-    N = 4
+    k = 3
+    N = 3
     d = numpy.array([1,2,3])
-    u = lambda p: numpy.sin(numpy.dot(p, d))[:,numpy.newaxis]
-    f = lambda p: -sum(d**2) * u(p)
+    u = lambda p: numpy.sin(numpy.dot(p, d))[:,numpy.newaxis, numpy.newaxis]
+    f = lambda p: -(sum(d**2) * u(p))
     points = uniformcubepoints(8)
-    Up = mixedpoissondual(k,N, u, f, points) [:,numpy.newaxis]
-    up = u(points)
+    Up = mixedpoissondual(k,N, u, f, points).flatten()
+    up = u(points).flatten()
+    print Up.shape, up.shape
     l2 = math.sqrt(numpy.sum((Up - up)**2)/(len(points)))
     print l2
 
         
 if __name__ == "__main__":
     dopoissonmixed()
-    #    tabulate()
+    #tabulate()
     #    dopoissonneumann()
 #    laplaceeigs(3,3)
-#    dopoisson()
-#    dopoissonmixed()
+#     dopoisson()
+#     dopoissonmixed()

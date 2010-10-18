@@ -102,9 +102,9 @@ class System(object):
         internalSystem = SI[:,self.rightintidx]
         tagtogvals = {}
         tagtoBoundarySystem = {}
-        for tag, bdy in self.leftbdys.iteritems():
+        for tag, bdy in self.rightbdys.iteritems():
             tagtogvals[tag] = bdy.evaluatedofs(tagtog[tag])
-            tagtoBoundarySystem[tag] = SI[:,self.rightbdys[tag].indices]
+            tagtoBoundarySystem[tag] = SI[:,bdy.indices]
         
         return internalSystem, tagtoBoundarySystem, tagtogvals        
     
@@ -118,7 +118,9 @@ class System(object):
         """ Calculate the load vector based on a boundary integral, e.g. for Dirichlet data in the dual formulation of the mixed laplacian"""
         tagtogsys = {}
         for tag, g in tagtog.iteritems():
-            x,w,n = zip(*self.boundaryquad.getQuadratures(tag, squarequad, trianglequad))            
+            x,w,n = zip(*self.boundaryquad.getQuadratures(tag, squarequad, trianglequad)) 
+#            print map(g,x,n)          
+#            print map(lambda e,p: 0 if len(p) is 0 else e.values(p), self.leftbasis.elements, x)
             fvalsiter = it.imap(g, x, n)
             testvalsiter = it.imap(lambda e,p: 0 if len(p) is 0 else e.values(p), self.leftbasis.elements, x)
             tagtogsys[tag] = blockInnerProducts(w, testvalsiter, fvalsiter, self.leftI, numpy.ones((self.elementinfo.numElements(), 1)))
@@ -155,12 +157,12 @@ class SymmetricSystem(System):
                         
 class AsymmetricSystem(System):
     """ An  Asymmetric system"""
-    def __init__(self, leftelements, rightelements, quadrule, meshevents, boundarytags):
+    def __init__(self, leftelements, rightelements, quadrule, meshevents, leftboundarytags, rightboundarytags):
         leftbasis = Basis(leftelements)
         rightbasis = Basis(rightelements)
         meshevents(leftbasis)
         meshevents(rightbasis)
-        super(AsymmetricSystem, self).__init__(quadrule, meshevents, leftbasis, rightbasis, processIndices(leftbasis, boundarytags), processIndices(rightbasis, boundarytags))
+        super(AsymmetricSystem, self).__init__(quadrule, meshevents, leftbasis, rightbasis, processIndices(leftbasis, leftboundarytags), processIndices(rightbasis, rightboundarytags))
 
     def systemMatrix(self, leftderiv, rightderiv):
         leftvals = self.leftbasis.getElementValues(self.refquadpoints, leftderiv)
