@@ -49,7 +49,7 @@ def stokes2(k, meshevents, v, points):
     Gt = Asys.boundaryLoad({openbdytag: vc}, pu.squarequadrature(k+1), pu.trianglequadrature(k+1), False)
 
 #    print "Gt ",Gt
- #   print A.shape, BT.shape, C.shape, BTI.shape, BTE[openbdytag].shape, BTGs[openbdytag].shape, CI.shape
+    print A.shape, BT.shape, C.shape, BTI.shape, BTE[openbdytag].shape, BTGs[openbdytag].shape, CI.shape
 
     AL = Gt[openbdytag] + BTE[openbdytag] * BTGs[openbdytag]
  #   print "AL ",AL
@@ -73,7 +73,7 @@ def stokes2(k, meshevents, v, points):
 #    uu = BsysT.evaluate(points, U, {}, False)
     uu = BsysT.evaluate(points, np.zeros_like(U), BTGs, False)
 #    print np.hstack((points, u))
-    print u
+#    print u
     return u, uu
     
 def stokescubemesh(n, mesh):
@@ -114,7 +114,7 @@ class MeshPlotter(pm.MeshBase):
         
 if __name__ == "__main__":
     k = 2
-    N = 2
+    N = 6
     points = pu.uniformcubepoints(8)
     v = [[1,1,1]]
 #    v = [[0,0,0]]
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     u, uu = stokes2(k,meshevents,np.array(v), points)
     pt = points.transpose()
     ut = u.transpose()
-    print ut
+#    print ut
     emm.figure(bgcolor=(1,1,1))
 
     emm.quiver3d(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2])
