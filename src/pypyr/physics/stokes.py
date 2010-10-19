@@ -11,7 +11,7 @@ import pypyr.mesh as pm
 import numpy as np
 import scipy.sparse as ss
 import scipy.sparse.linalg as ssl
-#import enthought.mayavi.mlab as emm
+import enthought.mayavi.mlab as emm
 
 openbdytag = 'OPEN'
 closedbdytag = 'CLOSED'
@@ -44,15 +44,15 @@ def stokes2(k, meshevents, v, points):
     CI, CE, CGs = Csys.processBoundary(C, {openbdytag:vv})
     
     P = Csys.loadVector(lambda x: np.ones((len(x),1,1)))
-    print "P ",P
+#    print "P ",P
     
     Gt = Asys.boundaryLoad({openbdytag: vc}, pu.squarequadrature(k+1), pu.trianglequadrature(k+1), False)
 
-    print "Gt ",Gt
-    print A.shape, BT.shape, C.shape, BTI.shape, BTE[openbdytag].shape, BTGs[openbdytag].shape, CI.shape
+#    print "Gt ",Gt
+ #   print A.shape, BT.shape, C.shape, BTI.shape, BTE[openbdytag].shape, BTGs[openbdytag].shape, CI.shape
 
     AL = Gt[openbdytag] + BTE[openbdytag] * BTGs[openbdytag]
-    print "AL ",AL
+ #   print "AL ",AL
     CL = -CE[openbdytag] * CGs[openbdytag]
     
     nvort = A.get_shape()[0]
@@ -64,10 +64,10 @@ def stokes2(k, meshevents, v, points):
     L = np.vstack((AL,np.zeros((nvel,1)), CL, np.zeros((1,1))))
     X = ssl.spsolve(S, L)
     U = X[nvort:(nvort + nvel)]
-    print "X",X
-    print "U", U
-    print "BTGs", BTGs
-    
+#    print "X",X
+#    print "U", U
+#    print "BTGs", BTGs
+#    
     u = BsysT.evaluate(points, U, BTGs, False)
 #    uu = Asys.evaluate(points, np.eye(nvort)[-2], {}, False)
 #    uu = BsysT.evaluate(points, U, {}, False)
@@ -84,7 +84,7 @@ def stokescubemesh(n, mesh):
     closedbdy = []
     for i in idxn1: 
         mesh.addPoint(tuple(i), l[i])
-        if (i==0).any() or (i==n).any(): open.append(tuple(i)) 
+        if (i==0).any() or (i==n).any(): openbdy.append(tuple(i)) 
 #        if i[0]==0 or i[1]==n: openbdy.append(tuple(i)) 
     mesh.addBoundary(openbdytag, openbdy)
     mesh.addBoundary(closedbdytag, closedbdy)
@@ -101,6 +101,16 @@ def stokescubemesh(n, mesh):
             
     return mesh
 
+class MeshPlotter(pm.MeshBase):
+    triangles = []
+    def addPyramid(self, pointids):
+        pointids = np.array(pointids, dtype=object)
+        self.triangles.extend([pointids[t] for t in [[0,1,4],[1,2,4],[2,3,4],[3,0,4]]])
+    
+    def plot(self, fig):
+        x,y,z = zip(*self.getPoints(np.array(self.triangles).flatten()))
+        emm.triangular_mesh(x,y,z, np.arange(len(self.triangles)*3).reshape(-1,3), representation = 'wireframe', figure = fig, color=(0,0,0), line_width=0.5)
+        
         
 if __name__ == "__main__":
     k = 2
@@ -108,12 +118,19 @@ if __name__ == "__main__":
     points = pu.uniformcubepoints(8)
     v = [[1,1,1]]
 #    v = [[0,0,0]]
-    
-    u, uu = stokes2(k,lambda m: stokescubemesh(N, m),np.array(v), points)
-    print u[-64:]
+    meshevents = lambda m: stokescubemesh(N, m)
+    mp = MeshPlotter()
+    meshevents(mp)
+    u, uu = stokes2(k,meshevents,np.array(v), points)
     pt = points.transpose()
     ut = u.transpose()
+    print ut
+    emm.figure(bgcolor=(1,1,1))
+
     emm.quiver3d(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2])
+
+#    emm.flow(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2])
+    mp.plot(emm.gcf())
 #    emm.figure()
 #    uut = uu.transpose()
 #    emm.quiver3d(pt[0],pt[1],pt[2], uut[0],uut[1],uut[2])

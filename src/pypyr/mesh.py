@@ -22,8 +22,8 @@ class MeshBase(object):
     def addPoint(self, id, point):
         self.__points[id] = point
     
-    def getPoints(self, ids):
-        return numpy.array([self.__points[id] for id in ids])
+    def getPoints(self, ids=None):
+        return numpy.array([self.__points[id] for id in ids]) 
 
     def addBoundary(self, id, pointids):
         self.boundaries[id] = pointids
