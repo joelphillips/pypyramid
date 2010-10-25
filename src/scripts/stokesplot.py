@@ -23,15 +23,15 @@ class MeshPlotter(pm.MeshBase):
   
         
 if __name__ == "__main__":
-    k = 3
-    N = 2
+    k = 2
+    N = 1
     points = pu.uniformcubepoints(8)
     v = [[1,1,1]]
 #    v = [[0,0,0]]
     meshevents = lambda m: pps.stokescubemesh(N, m)
     mp = MeshPlotter()
     meshevents(mp)
-    u, uu = pps.stokespressure(k,meshevents,{pps.inputbdytag:pps.pfn(0), pps.outputbdytag:pps.pfn(1.0)}, points)
+    u, uu = pps.stokespressure(k,meshevents,{pps.inputbdytag:pps.pfn(0), pps.outputbdytag:pps.pfn(1.0)}, points, False, N==1)
     pt = points.transpose()
     ut = u.transpose()
         

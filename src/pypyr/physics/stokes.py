@@ -77,7 +77,7 @@ def stokes2(k, meshevents, v, points):
     return u, uu
 
 
-def stokespressure(k, meshevents, pressures, points, countdofs = False):
+def stokespressure(k, meshevents, pressures, points, countdofs = False, avpressure = False):
     vortelts1 = pe.HcurlElements(k)
     vortelts2 = pe.HcurlElements(k)
     velelts1 = pe.HdivElements(k)
@@ -120,11 +120,15 @@ def stokespressure(k, meshevents, pressures, points, countdofs = False):
     nvel = BTI.get_shape()[1]
     print nvel
     
-    S = ss.bmat([[A, -BTI, None],[-BTI.transpose(), None, CI.transpose()],[None, CI, None]])
+    if avpressure:
+        S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, P], [None,None,P.transpose(), None]])
+        L = np.vstack((AL,BL, CL, np.zeros((1,1))))
+    else:
+        S = ss.bmat([[A, -BTI, None],[-BTI.transpose(), None, CI.transpose()],[None, CI, None]])
+        L = np.vstack((AL,BL, CL))
 #    L = np.vstack((AL,np.zeros((nvel,1)), CL))
-#    S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, P], [None,None,P.transpose(), None]])
-#    L = np.vstack((AL,BL, CL, np.zeros((1,1))))
-    L = np.vstack((AL,BL, CL))
+#    print A.todense(), BTI.todense(), CI.todense()
+#    print AL, BL, CL
     X = ssl.spsolve(S, L)
     U = X[nvort:(nvort + nvel)]
 #    print "X",X
