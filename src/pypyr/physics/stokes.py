@@ -7,12 +7,9 @@ Created on Oct 10, 2010
 import pypyr.elements as pe
 import pypyr.utils as pu
 import pypyr.assembly as pa
-import pypyr.mesh as pm
-import pypyr.extra.poisson as pep
 import numpy as np
 import scipy.sparse as ss
 import scipy.sparse.linalg as ssl
-import enthought.mayavi.mlab as emm
 
 inputbdytag = 'INPUT'
 outputbdytag = 'OUTPUT'
@@ -122,10 +119,11 @@ def stokespressure(k, meshevents, pressures, points):
     nvel = BTI.get_shape()[1]
     print nvel
     
-#    S = ss.bmat([[A, -BTI, None],[-BTI.transpose(), None, CI.transpose()],[None, CI, None]])
+    S = ss.bmat([[A, -BTI, None],[-BTI.transpose(), None, CI.transpose()],[None, CI, None]])
 #    L = np.vstack((AL,np.zeros((nvel,1)), CL))
-    S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, P], [None,None,P.transpose(), None]])
-    L = np.vstack((AL,BL, CL, np.zeros((1,1))))
+#    S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, P], [None,None,P.transpose(), None]])
+#    L = np.vstack((AL,BL, CL, np.zeros((1,1))))
+    L = np.vstack((AL,BL, CL))
     X = ssl.spsolve(S, L)
     U = X[nvort:(nvort + nvel)]
 #    print "X",X
@@ -172,42 +170,6 @@ def stokescubemesh(n, mesh):
 def pfn(p):
     return lambda x,n: (n * p)[:,np.newaxis,:]
 
-
-class MeshPlotter(pm.MeshBase):
-    triangles = []
-    def addPyramid(self, pointids):
-        pointids = np.array(pointids, dtype=object)
-        self.triangles.extend([pointids[t] for t in [[0,1,4],[1,2,4],[2,3,4],[3,0,4]]])
-    
-    def plot(self, fig):
-        x,y,z = zip(*self.getPoints(np.array(self.triangles).flatten()))
-        emm.triangular_mesh(x,y,z, np.arange(len(self.triangles)*3).reshape(-1,3), representation = 'wireframe', figure = fig, color=(0,0,0), line_width=0.5)
-        
-        
-if __name__ == "__main__":
-    k = 2
-    N = 3
-    points = pu.uniformcubepoints(8)
-    v = [[1,1,1]]
-#    v = [[0,0,0]]
-    meshevents = lambda m: stokescubemesh(N, m)
-    mp = MeshPlotter()
-    meshevents(mp)
-    u, uu = stokespressure(k,meshevents,{inputbdytag:pfn(0), outputbdytag:pfn(1)}, points)
-    pt = points.transpose()
-    ut = u.transpose()
-        
-    
-    emm.figure(bgcolor=(1,1,1))
-
-    emm.quiver3d(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2])
-
-#    emm.flow(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2])
-    mp.plot(emm.gcf())
-#    emm.figure()
-#    uut = uu.transpose()
-#    emm.quiver3d(pt[0],pt[1],pt[2], uut[0],uut[1],uut[2])
-    emm.show()
 
 
 
