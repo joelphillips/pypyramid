@@ -73,10 +73,11 @@ def stokes2(k, meshevents, v, points):
     uu = BsysT.evaluate(points, np.zeros_like(U), BTGs, False)
 #    print np.hstack((points, u))
 #    print u
+
     return u, uu
 
 
-def stokespressure(k, meshevents, pressures, points):
+def stokespressure(k, meshevents, pressures, points, countdofs = False):
     vortelts1 = pe.HcurlElements(k)
     vortelts2 = pe.HcurlElements(k)
     velelts1 = pe.HdivElements(k)
@@ -136,6 +137,8 @@ def stokespressure(k, meshevents, pressures, points):
     uu = BsysT.evaluate(points, np.zeros_like(U), BTGs, False)
 #    print np.hstack((points, u))
 #    print u
+    if countdofs:
+        return u, len(X)
     return u, uu
     
 def stokescubemesh(n, mesh):
