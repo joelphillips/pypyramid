@@ -55,7 +55,7 @@ def getJacobi(a,b):
 
 
 class Jacobi(object):
-    maxN = 20
+    maxN = 200
 #    maxrecent = 10
     def __init__(self, a,b):
         from collections import deque

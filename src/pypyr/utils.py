@@ -55,5 +55,8 @@ def legendrequadrature(n):
     x00,w00 = scipy.special.orthogonal.p_roots(n)
     return (x00.reshape(-1,1)+1)/2, w00/2
 
+def uniformsquarepoints(np):
+    return numpy.linspace(0,1,np)[numpy.mgrid[0:np,0:np].reshape(2,-1)].transpose()
+
 def uniformcubepoints(np):
     return numpy.linspace(0,1,np)[numpy.mgrid[0:np,0:np,0:np].reshape(3,-1)].transpose()

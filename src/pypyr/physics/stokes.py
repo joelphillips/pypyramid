@@ -8,6 +8,7 @@ import pypyr.elements as pe
 import pypyr.utils as pu
 import pypyr.assembly as pa
 import pypyr.mesh as pm
+import pypyr.extra.poisson as pep
 import numpy as np
 import scipy.sparse as ss
 import scipy.sparse.linalg as ssl
@@ -192,10 +193,11 @@ if __name__ == "__main__":
     meshevents = lambda m: stokescubemesh(N, m)
     mp = MeshPlotter()
     meshevents(mp)
-    u, uu = stokespressure(k,meshevents,{inputbdytag:pfn(1), outputbdytag:pfn(-1)}, points)
+    u, uu = stokespressure(k,meshevents,{inputbdytag:pfn(0), outputbdytag:pfn(1)}, points)
     pt = points.transpose()
     ut = u.transpose()
-    print ut
+        
+    
     emm.figure(bgcolor=(1,1,1))
 
     emm.quiver3d(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2])
