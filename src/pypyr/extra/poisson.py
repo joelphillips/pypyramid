@@ -60,11 +60,11 @@ def convergence(N):
         nv = poisson(n,x)[0].flatten()
         e[n] = math.sqrt(sum((Nv - nv)**2 * w))
     print e
-    pylab.semilogy(e)
+    pylab.loglog(e)
     
 
 if __name__ == '__main__':
-    convergence(20)
+    convergence(40)
     pylab.show()
 #    
 #    N = 6

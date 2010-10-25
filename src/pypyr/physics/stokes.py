@@ -61,6 +61,7 @@ def stokes2(k, meshevents, v, points):
 #    L = np.vstack((AL,np.zeros((nvel,1)), CL))
     S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, P], [None,None,P.transpose(), None]])
     L = np.vstack((AL,np.zeros((nvel,1)), CL, np.zeros((1,1))))
+    print "solving"
     X = ssl.spsolve(S, L)
     U = X[nvort:(nvort + nvel)]
 #    print "X",X
@@ -126,9 +127,6 @@ def stokespressure(k, meshevents, pressures, points, countdofs = False, avpressu
     else:
         S = ss.bmat([[A, -BTI, None],[-BTI.transpose(), None, CI.transpose()],[None, CI, None]])
         L = np.vstack((AL,BL, CL))
-#    L = np.vstack((AL,np.zeros((nvel,1)), CL))
-#    print A.todense(), BTI.todense(), CI.todense()
-#    print AL, BL, CL
     X = ssl.spsolve(S, L)
     U = X[nvort:(nvort + nvel)]
 #    print "X",X

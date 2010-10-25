@@ -30,7 +30,7 @@ def convergence():
             e = [l2(ut[0] - up)/l2up, l2(ut[1])/l2up, l2(ut[2])/l2up]
             print k, N, e, dofs
             f.write("%s, %s, %s, %s\n"%(k,N,e,dofs))
-            if dofs > 10000: break
+            if dofs > 20000: break
     f.close()
   
 
