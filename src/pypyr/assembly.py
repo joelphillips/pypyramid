@@ -80,6 +80,15 @@ class System(object):
         self.rightbasis = rightbasis
         self.leftI, self.leftbdys, self.leftintidx = leftindexinfo
         self.rightI, self.rightbdys, self.rightintidx = rightindexinfo
+        
+    def _transposeinplace(self):
+        """ Transpose this object """
+        self.leftbasis, self.rightbasis = self.rightbasis, self.leftbasis
+        self.leftI, self.rightI = self.rightI, self.leftI 
+        self.leftbdys, self.rightbdys = self.rightbdys, self.leftbdys
+        self.leftintidx, self.rightintidx = self.rightintidx, self.leftintidx
+        return self
+        
 
     def processSystem(self, leftvalsiter, rightvalsiter):
         """ Construct the (non-boundary aware) stiffness matrix """
@@ -123,7 +132,7 @@ class System(object):
 #            print map(lambda e,p: 0 if len(p) is 0 else e.values(p), self.leftbasis.elements, x)
             fvalsiter = it.imap(g, x, n)
             testvalsiter = it.imap(lambda e,p: 0 if len(p) is 0 else e.values(p), self.leftbasis.elements, x)
-            tagtogsys[tag] = blockInnerProducts(w, testvalsiter, fvalsiter, self.leftI, numpy.ones((self.elementinfo.numElements(), 1)))
+            tagtogsys[tag] = blockInnerProducts(w, testvalsiter, fvalsiter, self.leftI, numpy.ones((self.elementinfo.numElements(), 1)))[self.leftintidx,:]
         return tagtogsys                
 
     def evaluate(self, points, U, tagtoG = {}, deriv=False):
@@ -169,3 +178,6 @@ class AsymmetricSystem(System):
         rightvals = self.rightbasis.getElementValues(self.refquadpoints, rightderiv)
         return super(AsymmetricSystem, self).processSystem(leftvals, rightvals)
     
+    def transpose(self):
+        import copy
+        return copy.copy(self)._transposeinplace()

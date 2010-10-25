@@ -13,7 +13,8 @@ import scipy.sparse as ss
 import scipy.sparse.linalg as ssl
 import enthought.mayavi.mlab as emm
 
-openbdytag = 'OPEN'
+inputbdytag = 'INPUT'
+outputbdytag = 'OUTPUT'
 closedbdytag = 'CLOSED'
 bdytag = 'BDY'
 
@@ -28,8 +29,8 @@ def stokes2(k, meshevents, v, points):
     
     Asys = pa.SymmetricSystem(vortelts1, quadrule, meshevents, [])
 #    Bsys = pa.AsymmetricSystem(velelts1, vortelts2, quadrule, meshevents, [bdytag], [])
-    BsysT = pa.AsymmetricSystem(vortelts2, velelts1, quadrule, meshevents, [], [openbdytag])
-    Csys = pa.AsymmetricSystem(pressureelts1,velelts2, quadrule, meshevents, [], [openbdytag])
+    BsysT = pa.AsymmetricSystem(vortelts2, velelts1, quadrule, meshevents, [], [bdytag])
+    Csys = pa.AsymmetricSystem(pressureelts1,velelts2, quadrule, meshevents, [], [bdytag])
     
     A = Asys.systemMatrix(False)
     BT = BsysT.systemMatrix(True, False)
@@ -40,20 +41,20 @@ def stokes2(k, meshevents, v, points):
 #    vt = lambda x,n: (v - vn(x,n)*n)[:,np.newaxis,:]
     vc = lambda x,n: np.cross(v, n)[:, np.newaxis, :]
     
-    BTI, BTE, BTGs = BsysT.processBoundary(BT, {openbdytag:vv})
-    CI, CE, CGs = Csys.processBoundary(C, {openbdytag:vv})
+    BTI, BTE, BTGs = BsysT.processBoundary(BT, {bdytag:vv})
+    CI, CE, CGs = Csys.processBoundary(C, {bdytag:vv})
     
     P = Csys.loadVector(lambda x: np.ones((len(x),1,1)))
 #    print "P ",P
     
-    Gt = Asys.boundaryLoad({openbdytag: vc}, pu.squarequadrature(k+1), pu.trianglequadrature(k+1), False)
+    Gt = Asys.boundaryLoad({bdytag: vc}, pu.squarequadrature(k+1), pu.trianglequadrature(k+1), False)
 
 #    print "Gt ",Gt
-    print A.shape, BT.shape, C.shape, BTI.shape, BTE[openbdytag].shape, BTGs[openbdytag].shape, CI.shape
+    print A.shape, BT.shape, C.shape, BTI.shape, BTE[bdytag].shape, BTGs[bdytag].shape, CI.shape
 
-    AL = Gt[openbdytag] + BTE[openbdytag] * BTGs[openbdytag]
+    AL = Gt[bdytag] + BTE[bdytag] * BTGs[bdytag]
  #   print "AL ",AL
-    CL = -CE[openbdytag] * CGs[openbdytag]
+    CL = -CE[bdytag] * CGs[bdytag]
     
     nvort = A.get_shape()[0]
     nvel = BTI.get_shape()[1]
@@ -77,7 +78,7 @@ def stokes2(k, meshevents, v, points):
     return u, uu
 
 
-def stokespressure(k, meshevents, pressures, closedtag, points):
+def stokespressure(k, meshevents, pressures, points):
     vortelts1 = pe.HcurlElements(k)
     vortelts2 = pe.HcurlElements(k)
     velelts1 = pe.HdivElements(k)
@@ -88,39 +89,42 @@ def stokespressure(k, meshevents, pressures, closedtag, points):
     
     Asys = pa.SymmetricSystem(vortelts1, quadrule, meshevents, [])
 #    Bsys = pa.AsymmetricSystem(velelts1, vortelts2, quadrule, meshevents, [bdytag], [])
-    BsysT = pa.AsymmetricSystem(vortelts2, velelts1, quadrule, meshevents, [], [closedtag])
-    Csys = pa.AsymmetricSystem(pressureelts1,velelts2, quadrule, meshevents, [pressures.keys()], [closedtag])
+    BsysT = pa.AsymmetricSystem(vortelts2, velelts1, quadrule, meshevents, [], [closedbdytag])
+    Csys = pa.AsymmetricSystem(pressureelts1,velelts2, quadrule, meshevents, [], [closedbdytag])
     
     A = Asys.systemMatrix(False)
     BT = BsysT.systemMatrix(True, False)
     C = Csys.systemMatrix(False, True)
     
-    v0 = lambda x,n: np.zeros_like(x)
-    vt = lambda x,n: np.zeros_like(x)
+    v0 = lambda x: np.zeros_like(x)[:,np.newaxis,:]
+    vt = lambda x,n: np.zeros_like(x)[:,np.newaxis,:]
     
-    BTI, BTE, BTGs = BsysT.processBoundary(BT, {closedtag:v0})
-    CI, CE, CGs = Csys.processBoundary(C, {closedtag:v0})
+    BTI, BTE, BTGs = BsysT.processBoundary(BT, {closedbdytag:v0})
+    CI, CE, CGs = Csys.processBoundary(C, {closedbdytag:v0})
     
     P = Csys.loadVector(lambda x: np.ones((len(x),1,1)))
 #    print "P ",P
-    alltags = pressures.keys() + [closedtag]
+    alltags = pressures.keys() + [closedbdytag]
     
     Gt = Asys.boundaryLoad(dict([(tag,vt) for tag in alltags]), pu.squarequadrature(k+1), pu.trianglequadrature(k+1), False)
+    Pv = Csys.transpose().boundaryLoad(pressures, pu.squarequadrature(k+1), pu.trianglequadrature(k+1), False)
 
 #    print "Gt ",Gt
-    print A.shape, BT.shape, C.shape, BTI.shape, BTE[openbdytag].shape, BTGs[openbdytag].shape, CI.shape
+    print A.shape, BT.shape, C.shape, BTI.shape, map(np.shape, BTE.values()), map(np.shape, BTGs.values()), map(np.shape, Gt.values()), map(np.shape, Pv.values()), CI.shape
 
-    AL = Gt[openbdytag] + BTE[openbdytag] * BTGs[openbdytag]
+    AL = sum(Gt.values()) + BTE[closedbdytag] * BTGs[closedbdytag]
+    BL = sum(Pv.values())
  #   print "AL ",AL
-    CL = -CE[openbdytag] * CGs[openbdytag]
+    CL = -CE[closedbdytag] * CGs[closedbdytag]
     
     nvort = A.get_shape()[0]
     nvel = BTI.get_shape()[1]
+    print nvel
     
 #    S = ss.bmat([[A, -BTI, None],[-BTI.transpose(), None, CI.transpose()],[None, CI, None]])
 #    L = np.vstack((AL,np.zeros((nvel,1)), CL))
     S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, P], [None,None,P.transpose(), None]])
-    L = np.vstack((AL,np.zeros((nvel,1)), CL, np.zeros((1,1))))
+    L = np.vstack((AL,BL, CL, np.zeros((1,1))))
     X = ssl.spsolve(S, L)
     U = X[nvort:(nvort + nvel)]
 #    print "X",X
@@ -139,14 +143,18 @@ def stokescubemesh(n, mesh):
     """ Produces the events to construct a mesh consisting of n x n x n cubes, each divided into 6 pyramids"""
     l = np.linspace(0,1,n+1)
     idxn1 = np.mgrid[0:n+1,0:n+1,0:n+1].reshape(3,-1).transpose()
-    openbdy = []
     closedbdy = []
+    inputbdy = []
+    outputbdy = []
     for i in idxn1: 
         mesh.addPoint(tuple(i), l[i])
-        if (i==0).any() or (i==n).any(): openbdy.append(tuple(i)) 
-#        if i[0]==0 or i[1]==n: openbdy.append(tuple(i)) 
-    mesh.addBoundary(openbdytag, openbdy)
+        if (i==0)[[1,2]].any() or (i==n)[[1,2]].any(): closedbdy.append(tuple(i)) 
+        if i[0]==0: inputbdy.append(tuple(i))
+        if i[0]==n: outputbdy.append(tuple(i)) 
+    mesh.addBoundary(bdytag, closedbdy + inputbdy + outputbdy)
     mesh.addBoundary(closedbdytag, closedbdy)
+    mesh.addBoundary(inputbdytag, inputbdy)
+    mesh.addBoundary(outputbdytag, outputbdy)
     
     l12 = (l[1:] + 1.0*l[:-1])/2.0
     idxn = np.mgrid[0:n, 0:n, 0:n].reshape(3,-1).transpose()
@@ -159,6 +167,10 @@ def stokescubemesh(n, mesh):
             mesh.addPyramid(map(tuple, cornerids[basecorners] + i)+[id])
             
     return mesh
+
+def pfn(p):
+    return lambda x,n: (n * p)[:,np.newaxis,:]
+
 
 class MeshPlotter(pm.MeshBase):
     triangles = []
@@ -173,17 +185,17 @@ class MeshPlotter(pm.MeshBase):
         
 if __name__ == "__main__":
     k = 2
-    N = 6
+    N = 3
     points = pu.uniformcubepoints(8)
     v = [[1,1,1]]
 #    v = [[0,0,0]]
     meshevents = lambda m: stokescubemesh(N, m)
     mp = MeshPlotter()
     meshevents(mp)
-    u, uu = stokes2(k,meshevents,np.array(v), points)
+    u, uu = stokespressure(k,meshevents,{inputbdytag:pfn(1), outputbdytag:pfn(-1)}, points)
     pt = points.transpose()
     ut = u.transpose()
-#    print ut
+    print ut
     emm.figure(bgcolor=(1,1,1))
 
     emm.quiver3d(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2])
