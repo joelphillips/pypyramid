@@ -4,18 +4,27 @@ Created on Oct 13, 2010
 @author: joel
 '''
 import scipy.sparse as ss
-import scipy.sparse.linalg as ssl
 import scipy.sparse.linalg.dsolve as ssld
+import scipy.sparse.linalg as ssl
 
 import numpy as np
 import math
 from pypyr.timing import print_timing
 
+try:
+    import pymklpardiso.linsolve as pl
+    def solve(A,b):
+        return pl.solve(A.tocsr().sorted_indices(),np.array(b))[0]
+except ImportError:
+    def solve(A,b):
+        return ssl.spsolve(A,b)
+
+
 @print_timing
 def directsolve(A,B,f,g):
     S = ss.bmat([[A, B.transpose()],[B, None]])
     M = np.concatenate((f.flatten(), g.flatten()))
-    U = ssl.spsolve(S, M)
+    U = solve(S, M)
     return U[:len(f)], U[len(f):]
 
 @print_timing

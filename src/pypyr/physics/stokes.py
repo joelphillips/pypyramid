@@ -9,7 +9,7 @@ import pypyr.utils as pu
 import pypyr.assembly as pa
 import numpy as np
 import scipy.sparse as ss
-import scipy.sparse.linalg as ssl
+import pypyr.solvers as ps
 
 inputbdytag = 'INPUT'
 outputbdytag = 'OUTPUT'
@@ -62,7 +62,7 @@ def stokes2(k, meshevents, v, points):
     S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, P], [None,None,P.transpose(), None]])
     L = np.vstack((AL,np.zeros((nvel,1)), CL, np.zeros((1,1))))
     print "solving"
-    X = ssl.spsolve(S, L)
+    X = ps.solve(S, L)
     U = X[nvort:(nvort + nvel)]
 #    print "X",X
 #    print "U", U
@@ -127,7 +127,7 @@ def stokespressure(k, meshevents, pressures, points, countdofs = False, avpressu
     else:
         S = ss.bmat([[A, -BTI, None],[-BTI.transpose(), None, CI.transpose()],[None, CI, None]])
         L = np.vstack((AL,BL, CL))
-    X = ssl.spsolve(S, L)
+    X = ps.solve(S, L)
     U = X[nvort:(nvort + nvel)]
 #    print "X",X
 #    print "U", U
