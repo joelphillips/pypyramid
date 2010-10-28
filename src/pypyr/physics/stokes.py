@@ -102,7 +102,7 @@ def stokespressure(k, meshevents, pressures, points, countdofs = False, avpressu
     BTI, BTE, BTGs = BsysT.processBoundary(BT, {closedbdytag:v0})
     CI, CE, CGs = Csys.processBoundary(C, {closedbdytag:v0})
     
-    P = Csys.loadVector(lambda x: np.ones((len(x),1,1)))
+    Pav = Csys.loadVector(lambda x: np.ones((len(x),1,1)))
 #    print "P ",P
     alltags = pressures.keys() + [closedbdytag]
     
@@ -119,16 +119,18 @@ def stokespressure(k, meshevents, pressures, points, countdofs = False, avpressu
     
     nvort = A.get_shape()[0]
     nvel = BTI.get_shape()[1]
+    npress = C.get_shape()[0]
     print nvel
     
     if avpressure:
-        S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, P], [None,None,P.transpose(), None]])
+        S = ss.bmat([[A, -BTI, None, None],[-BTI.transpose(), None, CI.transpose(), None],[None, CI, None, Pav], [None,None,Pav.transpose(), None]])
         L = np.vstack((AL,BL, CL, np.zeros((1,1))))
     else:
         S = ss.bmat([[A, -BTI, None],[-BTI.transpose(), None, CI.transpose()],[None, CI, None]])
         L = np.vstack((AL,BL, CL))
     X = ps.solve(S, L)
     U = X[nvort:(nvort + nvel)]
+    P = X[(nvort+nvel):(nvort+nvel+npress)]
 #    print "X",X
 #    print "U", U
 #    print "BTGs", BTGs
@@ -136,12 +138,12 @@ def stokespressure(k, meshevents, pressures, points, countdofs = False, avpressu
     u = BsysT.evaluate(points, U, BTGs, False)
 #    uu = Asys.evaluate(points, np.eye(nvort)[-2], {}, False)
 #    uu = BsysT.evaluate(points, U, {}, False)
-    uu = BsysT.evaluate(points, np.zeros_like(U), BTGs, False)
+    p = Csys.transpose().evaluate(points, P, {}, False)
 #    print np.hstack((points, u))
 #    print u
     if countdofs:
         return u, len(X)
-    return u, uu
+    return u, p
     
 def stokescubemesh(n, mesh):
     """ Produces the events to construct a mesh consisting of n x n x n cubes, each divided into 6 pyramids"""
@@ -171,6 +173,52 @@ def stokescubemesh(n, mesh):
             mesh.addPyramid(map(tuple, cornerids[basecorners] + i)+[id])
             
     return mesh
+
+def cubeobstruction(mesh, obstructiontag, obstype = None):
+    n = 5
+    l = np.linspace(0,1,n+1)
+    idxn1 = np.mgrid[0:n+1,0:n+1,0:n+1].reshape(3,-1).transpose()
+    closedbdy = []
+    inputbdy = []
+    outputbdy = []
+    obstructionbdy = []
+    for i in idxn1: 
+        mesh.addPoint(tuple(i), l[i])
+        if (i==0)[[1,2]].any() or (i==n)[[1,2]].any(): closedbdy.append(tuple(i)) 
+        if i[0]==0: inputbdy.append(tuple(i))
+        if i[0]==n: outputbdy.append(tuple(i)) 
+    
+    l12 = (l[1:] + 1.0*l[:-1])/2.0
+    idxn = np.mgrid[0:n, 0:n, 0:n].reshape(3,-1).transpose()
+    cornerids = np.mgrid[0:2,0:2,0:2].reshape(3,8).transpose()
+
+    if obstype=='Pyramid':
+        for i in idxn:
+            id = tuple(i) + (1,)
+            mesh.addPoint(id, l12[i])
+            for c, basecorners in enumerate([[0,1,3,2],[4,5,7,6],[0,1,5,4],[2,3,7,6],[0,2,6,4],[1,3,7,5]]):
+                if c==0 and id == (2,2,2,1):
+                    obstructionbdy.extend(map(tuple, cornerids[basecorners] + i)+[id])
+                else:
+                    mesh.addPyramid(map(tuple, cornerids[basecorners] + i)+[id])
+    else:        
+        for i in idxn:
+            if tuple(i)==(2,2,2):
+                obstructionbdy.extend(map(tuple, cornerids + i))
+            else:
+                id = tuple(i) + (1,)
+                mesh.addPoint(id, l12[i])
+                for basecorners in [[0,1,3,2],[4,5,7,6],[0,1,5,4],[2,3,7,6],[0,2,6,4],[1,3,7,5]]:
+                    mesh.addPyramid(map(tuple, cornerids[basecorners] + i)+[id])
+   
+    mesh.addBoundary(bdytag, closedbdy + inputbdy + outputbdy + obstructionbdy)
+    mesh.addBoundary(closedbdytag, closedbdy + obstructionbdy)
+    mesh.addBoundary(inputbdytag, inputbdy)
+    mesh.addBoundary(outputbdytag, outputbdy)
+    mesh.addBoundary(obstructiontag, obstructionbdy)
+            
+    return mesh
+
 
 def pfn(p):
     return lambda x,n: (n * p)[:,np.newaxis,:]
