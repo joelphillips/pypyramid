@@ -23,7 +23,7 @@ class MeshPlotter(pm.MeshBase):
         x,y,z = zip(*self.getPoints(np.array(self.triangles).flatten()))
         emm.triangular_mesh(x,y,z, np.arange(len(self.triangles)*3).reshape(-1,3), representation = 'wireframe', figure = fig, color=(0.5,0.5,0.5), opacity = 0.4, line_width=0.5)
         
-    def plotbdy(self, fig, id):
+    def plotbdy(self, fig, id, opac = 0.9):
         idset = set(map(tuple, self.boundaries[id]))
         bdyts = []
         for t in self.triangles:
@@ -34,12 +34,12 @@ class MeshPlotter(pm.MeshBase):
                 bdyts.append(q[[2,1,3]])
             
         x,y,z = zip(*self.getPoints(np.array(bdyts).flatten()))
-        emm.triangular_mesh(x,y,z, np.arange(len(bdyts)*3).reshape(-1,3), representation = 'surface', figure = fig, color=(0.5,0.2,0.5), opacity = 0.9, line_width=0.5)
+        emm.triangular_mesh(x,y,z, np.arange(len(bdyts)*3).reshape(-1,3), representation = 'surface', figure = fig, color=(0.5,0.2,0.5), opacity = opac, line_width=0.5)
         
 
         
 if __name__ == "__main__":
-    k = 2
+    k = 1
     N = 2
     NP = 20
     points = pu.uniformcubepoints(NP)*0.6+0.2
@@ -64,6 +64,7 @@ if __name__ == "__main__":
     emm.flow(pt[0],pt[1],pt[2], ut[0],ut[1],ut[2], seedtype='plane', seed_resolution=10, seed_visible=True, scalars=p.reshape(NP,NP,NP))
     mp.plot(emm.gcf())
     mp.plotbdy(emm.gcf(), OT)
+    mp.plotbdy(emm.gcf(), pps.closedbdytag, opac = 0.4)
 #    emm.figure()
 #    uut = uu.transpose()
 #    emm.quiver3d(pt[0],pt[1],pt[2], uut[0],uut[1],uut[2])
