@@ -13,10 +13,11 @@ import math
 def convergence():
     f = open("sc.final.dat", "w")
     f.write("k,N,e,ee,dofs\n")
-    points, weights = pu.cubequadrature(30)
-    up, ddup = pep.poisson(60, points[:,np.array([1,2])])
+    points, weights = pu.cubequadrature(12)
+    up, ddup = pep.poisson(30, points[:,np.array([1,2])])
     l2 = lambda f: math.sqrt(np.sum(f.flatten() **2 * weights.flatten()))
     l2up = l2(up)
+    print l2up
 #    for N in range(2,15):
 #        for k in range(1,10):
     for (k,N) in [(1,2),(2,2),(3,4),(4,2),(5,2),(6,2),(1,3),(2,3),(3,3),(4,3),(1,4),(2,4),(3,4),(1,5),(2,5),(3,5),(1,6),(2,6),(1,7),(2,7),(1,8),(1,9),(1,10),(1,11)]:
