@@ -12,6 +12,7 @@ import math
 from pypyr.timing import print_timing
 
 try:
+    raise ImportError
     import pymklpardiso.linsolve as pl
     def solve(A,b):
         return pl.solve(A.tocsr().sorted_indices(),np.array(b))[0]
