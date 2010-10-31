@@ -21,11 +21,11 @@ def poisson(N, points):
     '''
     
     J = pf.getJacobi(1, 1)
-    x,w = pu.legendrequadrature(N*2+3)
+    x,w = pu.legendrequadrature(N*2+5)
     xf = x.flatten()
 
     an1 = np.arange(N+1)*2
-    ns = an1*2.0
+    ns = an1*1.0
     dpdp = np.diag((ns+1)**2 / (2*ns+3))    
     
     Px = J(2 * N,xf)[an1] * xf * (1-xf)
