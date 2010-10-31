@@ -20,7 +20,7 @@ def convergence():
     print l2up
 #    for N in range(2,15):
 #        for k in range(1,10):
-    for (k,N) in [(1,2),(2,2),(3,4),(4,2),(5,2),(6,2),(1,3),(2,3),(3,3),(4,3),(1,4),(2,4),(3,4),(1,5),(2,5),(3,5),(1,6),(2,6),(1,7),(2,7),(1,8),(1,9),(1,10),(1,11)]:
+    for (k,N) in [(1,2),(2,2),(3,2),(4,2),(5,2),(6,2),(1,3),(2,3),(3,3),(4,3),(1,4),(2,4),(3,4),(1,5),(2,5),(3,5),(1,6),(2,6),(1,7),(2,7),(1,8),(1,9),(1,10),(1,11)]:
         meshevents = lambda m: pps.stokescubemesh(N, m)
     
         u, dofs = pps.stokespressure(k,meshevents,{pps.inputbdytag:pps.pfn(-0.5), pps.outputbdytag:pps.pfn(0.5)}, points, True,N==1)
@@ -29,9 +29,9 @@ def convergence():
         
         
         e = [l2(ut[0] - up)/l2up, l2(ut[1])/l2up, l2(ut[2])/l2up]
-        ee = math.sqrt(e[0]**2 + e[1]**2, e[2]**2)
+        ee = math.sqrt(e[0]**2 + e[1]**2 + e[2]**2)
         print k, N, e, ee, dofs
-        f.write("%s, %s, %s, %s\n"%(k,N,e,ee, dofs))
+        f.write("%s, %s, %s, %s, %s\n"%(k,N,e,ee, dofs))
         f.flush()
 #        if dofs > 30000: break
     f.close()
