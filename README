@@ -1,0 +1,20 @@
+INTRODUCTION
+============
+PyPyramid is a library for constructing finite element solutions to mixed problems involving the spaces H^1, H(curl), H(div) and L^2 using high order pyramidal finite elements.
+
+INSTALL
+=======
+I'm afraid that you're somewhat on your own for the moment.  Your Python needs to have NumPy and SciPy.  It's going to help a lot if you have UMFPACK too and if you want to see anything, you'll need MayaVi.  The easiest way to get all these things is to download the Enthought Python distribution from
+
+http://www.enthought.com/products/edudownload.php
+
+Now put pypyramid/src into your PYTHONPATH and you should be good to go.
+
+DOCUMENTATION
+=============
+Also very much on your own, I'm afraid.  There is some class and function documentation, but it's not great yet.  Have a look at src/scripts for examples of running things.  Happy to discuss / improve things if there's demand for it.  joel.phillips@reading.ac.uk
+
+THESIS
+======
+To reproduce all the data contained my thesis, run src/scripts/stokesplot.py and src/scripts/stokesconvergence.py.  The success of stokesconvergence.py is going to depend on the sparse linear solver that you have installed and the physical resources of the machine.  The list of (k,N) pairs included in the code ran on a 64 bit 12-core Ubuntu machine with 96 GB memory (I didn't need anywhere need that much memory, though) for about 1 1/2 hours.
+
