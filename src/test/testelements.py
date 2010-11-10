@@ -40,7 +40,7 @@ class TestDegrees(unittest.TestCase):
             np.set_printoptions(precision = 4, suppress=True, linewidth=200)
             dofvals = numpy.concatenate([c.evaluatedofs(elt.values) for c in cs if c is not None], axis=0)
             ndof, nfn = dofvals.shape
-            print k,ndof,nfn
+#            print k,ndof,nfn
             numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
     
     def testDegreeSet(self):
@@ -66,12 +66,12 @@ class TestDegrees(unittest.TestCase):
             elt = degrees.pyramid(points, cs)
             dofvals = numpy.concatenate([c.evaluatedofs(elt.values) for c in cs if c is not None], axis=0)
             ndof, nfn = dofvals.shape
-            print "hdiv ",k,ndof,nfn
+#            print "hdiv ",k,ndof,nfn
             numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
             
     def testhcurlpyramid(self):
         for k in range(1,6):
-            print "H(curl) ", k
+#            print "H(curl) ", k
             degrees = HcurlElements(k)
             points = numpy.array([[0,0,0],[0,1,0],[1,1,0],[1,0,0],[1,1,1]])
             cs = []
@@ -83,6 +83,6 @@ class TestDegrees(unittest.TestCase):
             elt = degrees.pyramid(points, cs)
             dofvals = numpy.concatenate([c.evaluatedofs(elt.values) for c in cs if c is not None], axis=0)
             ndof, nfn = dofvals.shape
-            print ndof,nfn
+#            print ndof,nfn
             numpy.testing.assert_array_almost_equal(dofvals, numpy.hstack((numpy.eye(ndof), numpy.zeros((ndof,nfn - ndof )))))
                 

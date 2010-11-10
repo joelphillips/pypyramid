@@ -38,7 +38,7 @@ class DiffForm(object):
         return DiffForm(dcpts, self.derivs[1:], True)
     
 class CatDiffForm(object):
-    """ Concatenate 2 or more differential forms objects (think Helmholtz decomposition)
+    """ Concatenate 2 or more differential forms objects (think Helmholtz decomposition)"""
     def __init__(self, dfs):
         self.dfs = dfs
         self.ncpts = dfs[0].ncpts
@@ -52,7 +52,8 @@ class CatDiffForm(object):
     
                   
 class MapDiffForm():
-    """ Represents the pullbacks of the underlying differential forms"""        
+    """ Represents the pullbacks of the underlying differential forms"""      
+      
     def __init__(self, underlying, f, weights):
         self.underlying = underlying
         self.f = f
