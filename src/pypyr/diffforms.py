@@ -1,4 +1,18 @@
 '''
+Classes to represent spaces of differential forms
+
+Each differential form class should have the following properties:
+    ncpts: Number of components (i.e. (N, k) for a k-form on an N-manifold)
+    nfns: Dimension of the space
+
+Each differential forms class should have the following methods:
+    values:  Evaluates all the differential forms at the provided points.  If df is a differential forms object, 
+            df.values(p).shape == (len(p), df.nfns, df.ncpts)
+    D: Returns the a differential forms object that represents the exterior derivatives of this object.
+    
+Exterior derivative information is provided by the derivs list.  The first entry in derivs should be a 3-tensor that describes 
+the exterior derivative.  See DiffForm.D(self) and derham (at the end) to see how this works.     
+    
 Created on Aug 20, 2010
 
 @author: joel
@@ -7,6 +21,7 @@ from pypyr.functions import *
 from pypyr.mappings import Pullback
 
 class DiffForm(object):
+    """ Start here.  Constructs a differential forms by specifying the components as function classes"""
     def __init__(self, cpts, derivs, d2 = False):
         self.cpts = cpts
         self.ncpts = len(cpts)
@@ -23,6 +38,7 @@ class DiffForm(object):
         return DiffForm(dcpts, self.derivs[1:], True)
     
 class CatDiffForm(object):
+    """ Concatenate 2 or more differential forms objects (think Helmholtz decomposition)
     def __init__(self, dfs):
         self.dfs = dfs
         self.ncpts = dfs[0].ncpts
@@ -35,7 +51,8 @@ class CatDiffForm(object):
         return CatDiffForm([df.D() for df in self.dfs])
     
                   
-class MapDiffForm():        
+class MapDiffForm():
+    """ Represents the pullbacks of the underlying differential forms"""        
     def __init__(self, underlying, f, weights):
         self.underlying = underlying
         self.f = f

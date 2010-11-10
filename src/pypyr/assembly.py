@@ -89,7 +89,6 @@ class System(object):
         self.leftintidx, self.rightintidx = self.rightintidx, self.leftintidx
         return self
         
-
     def processSystem(self, leftvalsiter, rightvalsiter):
         """ Construct the (non-boundary aware) stiffness matrix """
         return blockInnerProducts(self.quadweights, leftvalsiter, rightvalsiter, self.leftI, self.rightI)

@@ -1,4 +1,9 @@
 '''
+Classes and functions to evaluate k-weighted polynomials
+
+The convention that we choose is that function classes should have a values method, which evaluates all the functions at the provided points
+and a property, nfns, which returns the number of functions.  So If f is a functions object, f.values(p).shape == (len(p), f.nfns) 
+
 Created on Aug 20, 2010
 
 @author: joel
@@ -7,7 +12,14 @@ import numpy
 from pypyr.timing import print_timing
 
 def jacobid(n, a, b, d):
-    """ (Derivatives of) Jacobi polynomials shifted to [0,1]"""
+    """ (Derivatives of) Jacobi polynomials shifted to [0,1]
+    
+    The scipy.special.orthogonal routines mean that this function is:
+    a) slow
+    b) incorrect (it fails at x=0, i.e. the sso routines fail at x=-1)
+    
+    Don't use it until they fix thins.
+    """
     from scipy.special.orthogonal import jacobi
     from math import factorial
     if d > n: return lambda x: numpy.zeros(x.shape)
@@ -15,38 +27,16 @@ def jacobid(n, a, b, d):
     j = jacobi(n-d, a+d, b+d)
     return lambda x: fac * j(2 * x - 1)
 
-#@print_timing
 def jacobi2d(N,a,b,d,x):
+    """ Return the dth derivative of the [d,N] Jacobi(a,b) polynomials at x"""
     from scipy.special.orthogonal import poch
-#    v = jacobi2(N-d, a+d, b+d,x)
     v = getJacobi(a+d,b+d)(N-d, x)   
-    
-#    facs = [factorial(a+b+d)/factorial(a+b)]
-#    for n in range(1,N+1): facs.append(facs[-1]*(a+b+d+n) / (a+b+n))        
-#    fv = numpy.array(facs)[d:,numpy.newaxis] * v
     fv = poch(numpy.arange(a+b+d+1, a+b+N+2), d)[:,numpy.newaxis] * v
-
     return numpy.vstack((numpy.zeros((d, len(x))), fv ))
-
-def jacobi2(N,a,b,x):
-    v = []
-    x = 2*x - 1
-    if N >= 0:
-        v.append(numpy.ones(len(x)))
-        if N >= 1:
-            v.append(((a + b + 2) * x + (a-b))/2.0)
-            for nn in range(2, N+1):
-                n = nn * 1.0
-                A=2*n*(n+a+b)/((2*n+a+b)*(2*n+a+b-1))
-                B=-(a*a-b*b)/((2*n+a+b)*(2*n+a+b-2))
-                C=2*(n+a-1)*(n+b-1)/((2*n+a+b-1)*(2*n+a+b-2))
-                v.append((v[-1] * (x-B) - C*v[-2])/A)
-#        print numpy.vstack(v).shape, N, len(x)
-        return numpy.vstack(v).reshape(N+1,len(x))
-    return numpy.zeros((0, len(x)))
 
 jacobicache = {}
 def getJacobi(a,b):
+    """ Caches the Jacobi polynomial objects"""
     j = jacobicache.get((a,b))
     if j is None:
         j = Jacobi(a,b)
@@ -55,8 +45,8 @@ def getJacobi(a,b):
 
 
 class Jacobi(object):
+    """ Caculate Jacobi polynomials"""
     maxN = 200
-#    maxrecent = 10
     def __init__(self, a,b):
         from collections import deque
         n = numpy.arange(0,self.maxN + 1, dtype=numpy.float_)
@@ -66,34 +56,24 @@ class Jacobi(object):
         self.A[1] = 2.0/(a+b+2)
         self.B[1] = -(a-b)/(a+b+2.0)
         self.C[1] = 0
-        
-#        self.recentx = deque(maxlen = self.maxrecent)
-#        self.recentvals = deque(maxlen = self.maxrecent)
-        
+                
     def __call__(self,N,x):
-#        for rx,rv in zip(self.recentx, self.recentvals):
-#            if numpy.array_equal(x,rx): 
-##                print "cache hit"
-#                return rv
-#        v = self.eval(N,x)
-#        self.recentx.append(x)
-#        self.recentvals.append(v)
-#        return v
-#            
-#        
-#    def eval(self, N, x):    
         v = [numpy.zeros(len(x))]
         x = 2*x - 1
         if N >= 0:
             v.append(numpy.ones(len(x)))
             for n in range(1, N+1):
                 v.append((v[-1] * (x-self.B[n]) - self.C[n]*v[-2])/self.A[n])
-    #        print numpy.vstack(v).shape, N, len(x)
         return numpy.vstack(v)[1:,:]
         
         
     
 class QSpace(object):
+    """ Represents (the derivatives of) a basis for space Q^[l,m]_k 
+    
+    where d is a 3-vector indicating how many times we should differentiate in each variable.  
+    This space lives on the infinite pyramid.
+    """
     def __init__(self, l,m,k, rmin=0, d = numpy.array([0,0,0])):
         if d[2] > 1: raise ValueError("Can only differentiate z once. d=%s"%d)
         self.l = l
@@ -104,8 +84,11 @@ class QSpace(object):
         lm = min(l,m)
         self.nfns = (2*lm+3)*(lm+2) * (lm+1) / 6 + (lm+2)*(lm+1)*abs(l-m)/2 - self.rmin
         
-#    @print_timing    
     def values(self,p):
+        """ Evaluate the basis at the points, p
+        
+        The basis is not optimal - should vary the order of the x and y Jacobi polynomial spaces as we increase r
+        """
         from math import factorial
         from numpy import newaxis
           
@@ -124,15 +107,6 @@ class QSpace(object):
 #            pz = jacobid(r,0,2,0)(1-zeta) if zd == 0 else zeta**2 * jacobid(r,0,2,1)(1-zeta)
             dfac = (-1)**zd * factorial(r+zd-1)/factorial(r-1) if r > 0 else 1 if zd == 0 else 0
             pz = dfac * zeta**(r+zd)
-#            px = [jacobid(n,0,0,xd)(x) for n in range(r+self.l+1-self.k)] # probably ought to try something other than legendre
-#            py = [jacobid(n,0,0,yd)(y) for n in range(r+self.m+1-self.k)]
-#            vals.extend([(pz * ppx * ppy).reshape(-1,1) for ppx in px for ppy in py])
-#            
-#            px = jacobi2d(r+self.l-self.k,0,0,xd,x)
-#            py = jacobi2d(r+self.m-self.k,0,0,yd,y)
-
-#            print px.shape, pxk[:max(0,r+self.l+1-self.k, :].shape, r, self.l, self.k
-#            print r, self.l, self.m, self.k, self.d, (pxk[:max(0,r+self.l+1-self.k),newaxis, :] * pyk[newaxis,:max(0,r+1+self.m-self.k),:] * pz).shape, pz.shape
             vals.append((pxk[:max(0,r+self.l+1-self.k),newaxis, :] * pyk[newaxis,:max(0,r+1+self.m-self.k),:] * pz).reshape(-1, len(p)).transpose())
             
         V = numpy.hstack(vals)
@@ -146,11 +120,13 @@ class QSpace(object):
         
     
     def deriv(self, i):
+        """ Return a derivative of this basis """
         newd = self.d.copy()
         newd[i]+=1
         return QSpace(self.l, self.m, self.k, self.rmin, newd)    
 
 class ZeroFns(object):
+    """ Zero functions """
     def __init__(self, nfns):
         self.nfns = nfns
         
@@ -161,6 +137,7 @@ class ZeroFns(object):
         return self
     
 class LinearComb(object):
+    """ A linear combination of functions """
     def __init__(self, fns, coeffs):
         self.fns = fns
         self.coeffs = coeffs

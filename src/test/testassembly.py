@@ -36,11 +36,13 @@ class TestAsymmetric(unittest.TestCase):
                 l2elt1 = L2Elements(k)
                 hdivelt2 = HdivElements(k)
                 l2elt2 = L2Elements(k)
-                system = AsymmetricSystem(hdivelt1, l2elt1, quadrule, lambda m:buildcubemesh(N,m,tag), [])
-                systemt = AsymmetricSystem(l2elt2, hdivelt2, quadrule, lambda m:buildcubemesh(N,m,tag), [])
+                system = AsymmetricSystem(hdivelt1, l2elt1, quadrule, lambda m:buildcubemesh(N,m,tag), [], [])
+                systemt = AsymmetricSystem(l2elt2, hdivelt2, quadrule, lambda m:buildcubemesh(N,m,tag), [], [])
                 SM = system.systemMatrix(True, False)
+                StM = system.transpose().systemMatrix(False, True)
                 SMt = systemt.systemMatrix(False, True)
                 np.testing.assert_array_almost_equal(SM.todense(), SMt.transpose().todense())  
+                np.testing.assert_array_almost_equal(StM.todense(), SMt.todense())  
                 
                 
             

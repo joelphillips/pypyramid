@@ -10,6 +10,7 @@ import pypyr.assembly as pa
 import numpy as np
 import scipy.sparse as ss
 import pypyr.solvers as ps
+import pypyr.timing as pt
 
 inputbdytag = 'INPUT'
 outputbdytag = 'OUTPUT'
@@ -76,7 +77,6 @@ def stokes2(k, meshevents, v, points):
 #    print u
 
     return u, uu
-
 
 def stokespressure(k, meshevents, pressures, points, countdofs = False, avpressure = False):
     vortelts1 = pe.HcurlElements(k)
