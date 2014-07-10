@@ -12,7 +12,7 @@ Now put pypyramid/src into your PYTHONPATH and you should be good to go.
 
 DOCUMENTATION
 =============
-Also very much on your own, I'm afraid.  There is some class and function documentation, but it's not great yet.  Have a look at src/scripts for examples of running things.  Happy to discuss / improve things if there's demand for it.  joel.phillips@gmail.com
+Also very much on your own, I'm afraid.  There is some class and function documentation, but it's not great yet.  Have a look at src/scripts for examples of running things.
 
 THESIS
 ======
